@@ -1,0 +1,569 @@
+% TODO: 
+% include språkbanken on title page?
+% include some kind of image on title page?
+% make sure parchment doesnt cover progress bar and footer (how??)
+
+% gu color: rgba(24, 75, 128, 255)
+% super useful website: https://deeditor.com/ (for editing svg colors)
+
+
+% ----------------------------------------------
+% tikx
+\usepackage{framed}
+\usepackage{tikz}
+\usepackage{pgf}
+
+\usetikzlibrary{calc,trees,positioning,arrows,chains,shapes.geometric,%
+    decorations.pathreplacing,decorations.pathmorphing,shapes,%
+    matrix,shapes.symbols}
+\pgfmathsetseed{1} % To have predictable results
+% Define a background layer, in which the parchment shape is drawn
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+
+% ------------- package flags --------------
+% \newcount\darkMode
+\newcount\showProgressBar
+\newcount\showSlideNumbers
+\newcount\showSlideTotal
+\newcount\showLogo
+\newcount\showSectionToc
+\newcount\showSubsectionToc
+% \newcount\showSectionPages
+\newcount\showSectionTitles
+% \darkMode=0
+\showProgressBar=0
+\showSlideNumbers=0
+\showSlideTotal=0
+\showLogo=0
+\showSectionToc=0
+\showSubsectionToc=0
+% \showSectionPages=0
+\showSectionTitles=0
+% Package options
+% \DeclareOption{dark}{\darkMode=1}
+\DeclareOption{progressBar}{\showProgressBar=1}
+\DeclareOption{slideNumbers}{\showSlideNumbers=1}
+\DeclareOption{slideTotal}{\showSlideTotal=1}
+\DeclareOption{logo}{\showLogo=1}
+\DeclareOption{sectionToc}{\showSectionToc=1}
+\DeclareOption{subsectionToc}{\showSubsectionToc=1}
+% \DeclareOption{sectionPages}{\showSectionPages=1}
+\DeclareOption{sectionTitles}{\showSectionTitles=1}
+\DeclareOption*{\PackageWarning{beamerthemedarkhoneymashup}{Unknown ‘\CurrentOption’}}
+\ProcessOptions\relax
+
+
+% a little command for positioning citations
+\newcommand{\positcite}[2][]{{\hfill \footnotesize \citet[][#1]{#2}}}
+
+% -----------------------------
+% define styles for the normal border and the torn border
+\tikzset{
+  normal border/.style={black!65!gray, decorate, 
+     decoration={random steps, segment length=2.5cm, amplitude=.7mm}},
+  torn border/.style={black!65!gray, decorate, 
+     decoration={random steps, segment length=.5cm, amplitude=1.7mm}}}
+
+% Macro to draw the shape behind the text, when it fits completly in the
+% page
+\def\parchmentframe#1{
+\tikz{
+  \node[inner sep=2em] (A) {#1};  % Draw the text of the node
+  \begin{pgfonlayer}{background}  % Draw the shape behind
+  \fill[normal border] 
+        (A.south east) -- (A.south west) -- 
+        (A.north west) -- (A.north east) -- cycle;
+  \end{pgfonlayer}}}
+
+% Macro to draw the shape, when the text will continue in next page
+\def\parchmentframetop#1{
+\tikz{
+  \node[inner sep=2em] (A) {#1};    % Draw the text of the node
+  \begin{pgfonlayer}{background}    
+  \fill[normal border]              % Draw the ``complete shape'' behind
+        (A.south east) -- (A.south west) -- 
+        (A.north west) -- (A.north east) -- cycle;
+  \fill[torn border]                % Add the torn lower border
+        ($(A.south east)-(0,.2)$) -- ($(A.south west)-(0,.2)$) -- 
+        ($(A.south west)+(0,.2)$) -- ($(A.south east)+(0,.2)$) -- cycle;
+  \end{pgfonlayer}}}
+
+% Macro to draw the shape, when the text continues from previous page
+\def\parchmentframebottom#1{
+\tikz{
+  \node[inner sep=2em] (A) {#1};   % Draw the text of the node
+  \begin{pgfonlayer}{background}   
+  \fill[normal border]             % Draw the ``complete shape'' behind
+        (A.south east) -- (A.south west) -- 
+        (A.north west) -- (A.north east) -- cycle;
+  \fill[torn border]               % Add the torn upper border
+        ($(A.north east)-(0,.2)$) -- ($(A.north west)-(0,.2)$) -- 
+        ($(A.north west)+(0,.2)$) -- ($(A.north east)+(0,.2)$) -- cycle;
+  \end{pgfonlayer}}}
+
+% Macro to draw the shape, when both the text continues from previous page
+% and it will continue in next page
+\def\parchmentframemiddle#1{
+\tikz{
+  \node[inner sep=2em] (A) {#1};   % Draw the text of the node
+  \begin{pgfonlayer}{background}   
+  \fill[normal border]             % Draw the ``complete shape'' behind
+        (A.south east) -- (A.south west) -- 
+        (A.north west) -- (A.north east) -- cycle;
+  \fill[torn border]               % Add the torn lower border
+        ($(A.south east)-(0,.2)$) -- ($(A.south west)-(0,.2)$) -- 
+        ($(A.south west)+(0,.2)$) -- ($(A.south east)+(0,.2)$) -- cycle;
+  \fill[torn border]               % Add the torn upper border
+        ($(A.north east)-(0,.2)$) -- ($(A.north west)-(0,.2)$) -- 
+        ($(A.north west)+(0,.2)$) -- ($(A.north east)+(0,.2)$) -- cycle;
+  \end{pgfonlayer}}}
+
+% Define the environment which puts the frame
+% In this case, the environment also accepts an argument with an optional
+% title (which defaults to ``Example'', which is typeset in a box overlaid
+% on the top border
+% \newenvironment{parchment}[1][Example]{%
+%   \def\FrameCommand{\parchmentframe}%
+%   \def\FirstFrameCommand{\parchmentframetop}%
+%   \def\LastFrameCommand{\parchmentframebottom}%
+%   \def\MidFrameCommand{\parchmentframemiddle}%
+%   \vskip\baselineskip
+%   \MakeFramed {\FrameRestore}
+%   \noindent\tikz\node[inner sep=1ex, draw=darkbeige!60, fill=black!70!gray, 
+%           anchor=west, overlay] at (0em, 2em) {\sffamily#1};\par}%
+% {\endMakeFramed}
+
+% remaking the parchment environment without the mandatory title box bc i dont like it
+\newenvironment{parchment}[1][\@nil]{%
+  \def\FrameCommand{\parchmentframe}%
+  \def\FirstFrameCommand{\parchmentframetop}%
+  \def\LastFrameCommand{\parchmentframebottom}%
+  \def\MidFrameCommand{\parchmentframemiddle}%
+  \vskip\baselineskip
+  \MakeFramed {\FrameRestore}
+  \def\tmp{#1}
+  \ifx\tmp\@nnil
+  % blabla
+  \else
+  \noindent\tikz\node[inner sep=1ex, draw=darkbeige!60, fill=black!70!gray, 
+           anchor=west, overlay] at (0em, 2em) {\sffamily#1};
+    \fi
+\par
+}
+{\endMakeFramed}
+
+% ----------------------------------------------
+
+% shape image to be round
+\newcommand{\roundpic}[4][]{
+  \tikz\node [circle, minimum width = #2,
+    path picture = {
+      \node [#1] at (path picture bounding box.center) {
+        \includegraphics[width=#3]{#4}};
+    }] {};}
+
+% ---------------------------------------
+
+\mode<presentation>{
+    \usetheme{Madrid}
+    % Boadilla CambridgeUS
+    % default Antibes Berlin Copenhagen
+    % Madrid Montpelier Ilmenau Malmoe
+    % Berkeley Singapore Warsaw
+    \usecolortheme{seagull}
+    % beetle, beaver, orchid, whale, dolphin, seagull
+    \useoutertheme{split}
+    % infolines miniframes shadow sidebar smoothbars smoothtree split tree
+    \useinnertheme{circles}
+    % circles, rectanges, rounded, inmargin
+}
+
+\captionsetup{labelformat=empty}
+
+\captionsetup[subfloat]{labelformat=empty}
+
+% ---------------------------------------------------------------------
+\definecolor{beige}{HTML}{F7E0AB} % F7E0AB  FFE5C9
+\definecolor{darkbeige}{HTML}{140F01} % 413006
+\definecolor{mildorange}{HTML}{C96208}
+% \definecolor{warmbeige}{HTML}{FFBC82}
+\definecolor{warmbeige}{HTML}{FC9D53}
+
+% Smooth Black Theme
+\setbeamercolor{normal text}{fg=beige,bg=darkbeige}
+\setbeamercolor{structure}{fg=beige}
+
+\setbeamercolor{alerted text}{fg=cyan!60!pink}
+
+
+\setbeamercolor{item projected}{use=item,fg=darkbeige,bg=item.fg!35}
+
+\setbeamercolor*{palette primary}{use=structure,fg=structure.fg}
+\setbeamercolor*{palette secondary}{use=structure,fg=structure.fg!95!darkbeige}
+\setbeamercolor*{palette tertiary}{use=structure,fg=structure.fg!90!darkbeige}
+\setbeamercolor*{palette quaternary}{use=structure,fg=structure.fg!95!darkbeige,bg=darkbeige!80}
+
+\setbeamercolor{section in head/foot}{bg=black!70!warmbeige, fg=beige}
+\setbeamercolor{subsection in head/foot}{bg=black!85!warmbeige, fg=beige}
+
+
+\setbeamercolor*{block title}{parent=structure,bg=darkbeige!70!gray,fg=pink!65!cyan!95!olive} % fg=pink!65!cyan!95!olive % fg=olive!55!cyan
+\setbeamercolor*{block body}{fg=darkbeige,bg=darkbeige!80!olive!40}
+\setbeamercolor*{block title alerted}{parent=alerted text,bg=darkbeige!15}
+\setbeamercolor*{block title example}{parent=example text,bg=darkbeige!15}
+
+% \setbeamercolor{title}{bg=beige!25!black}
+\setbeamercolor{title}{fg=mildorange!90}
+
+\setbeamercolor{quote}{fg=warmbeige!60!pink!90}
+
+
+% customize frame title appearance:
+% \setbeamerfont{frametitle}{size=\normalsize}
+% \setbeamercolor{frametitle}{fg=darkbeige!50!black!60!beige}
+
+\setbeamercolor{frametitle}{fg=mildorange!90!black}
+\setbeamercolor*{framesubtitle}{fg=mildorange!90!black}
+
+\setbeamercolor{itemize item}{fg=mildorange!80}
+\setbeamercolor{itemize subitem}{fg=mildorange!80}
+\setbeamercolor{itemize subsubitem}{fg=mildorange!80}
+
+\setbeamercolor{enumerate item}{fg=mildorange!70!pink}
+\setbeamercolor{enumerate subitem}{fg=mildorange!70!pink}
+\setbeamercolor{enumerate subsubitem}{fg=mildorange!70!pink}
+
+\setbeamercolor{section number projected}{bg=mildorange!90}
+
+% not needed because subsection numbers are not shown:
+% \setbeamercolor{subsection number projected}{bg=mildorange!90}
+% \setbeamercolor{subsubsection number projected}{bg=mildorange!90}
+
+
+
+% -------- progress bar definition! ---------
+
+
+% do we need these? they are already defined + seems to work perfectly without them
+% % progress bar counters
+% \newcounter{showSlideNumbers}
+% \setcounter{showSlideNumbers}{1}
+% \newcounter{showSlideTotal}
+% \setcounter{showSlideTotal}{1}
+
+\makeatletter
+\newcount\progressbar@tmpcounta% auxiliary counter
+\newcount\progressbar@tmpcountb% auxiliary counter
+\newdimen\progressbar@pbwidth %progressbar width
+\newdimen\progressbar@tmpdim % auxiliary dimension
+
+\newdimen\slidewidth % auxiliary dimension
+\newdimen\slideheight % auxiliary dimension
+
+% make the progress bar go across the screen
+\progressbar@pbwidth=\the\paperwidth
+\slidewidth=\the\paperwidth
+\slideheight=\the\paperheight
+
+\newcommand{\makeProgress}{
+  \ifnum\thepage>1\relax % skip title page
+    \ifnum\showProgressBar=1\relax%
+      % progress bar icon in the middle of the screen
+      \draw[fill=black!85!warmbeige,draw=none] (0,12pt) rectangle(\slidewidth,13pt+0.25cm);
+      \draw[fill=black!75!warmbeige,draw=none] (0,12pt) rectangle(\progressbar@tmpdim,13pt+0.25cm);
+    \fi
+    % bottom info
+    \ifnum\showSectionTitles=1\relax
+      \node[anchor=south west] at(0cm,0.28cm) {\color{warmbeige!80!black}\tiny\insertsection};
+    \fi
+    % if slide numbers are active
+    \ifnum\showSlideNumbers=1\relax%
+      % if slide totals are active
+      \ifnum\showSlideTotal=1\relax%
+        % draw both slide number and slide total
+        \node[anchor=south east] at(\slidewidth,0.28cm) {\color{warmbeige!80!black}\tiny\insertframenumber/\inserttotalframenumber};
+      \else
+        \node[anchor=south east] at(\slidewidth,0.28cm) {\color{warmbeige!80!black}\tiny\insertframenumber};
+      \fi
+    \fi
+  \fi
+}
+
+
+
+
+
+% ------------- Herb's logo at bottom ----------------- 
+% ----------------- + progress bar --------------------
+
+% for disabling the navigation symbols:
+% \setbeamertemplate{navigation symbols}{}
+
+% for disabling the default footline:
+\setbeamertemplate{footline}{}
+
+% add some space below the footnotes so they don't end up on the progress bar
+\setbeamertemplate{footnote}{ 
+	\parindent 0em
+	\noindent 
+	\raggedright 
+	\hbox to 0.8em{\hfil\insertfootnotemark}
+	\insertfootnotetext
+	\par
+	\vspace{2em}
+}
+
+\setbeamertemplate{background}{ % all slides
+	% progress bar stuff
+	\progressbar@tmpcounta=\insertframenumber
+	\progressbar@tmpcountb=\inserttotalframenumber
+	\progressbar@tmpdim=\progressbar@pbwidth
+	\divide\progressbar@tmpdim by 100
+	\multiply\progressbar@tmpdim by \progressbar@tmpcounta
+	\divide\progressbar@tmpdim by \progressbar@tmpcountb
+	\multiply\progressbar@tmpdim by 100
+
+	\begin{tikzpicture}
+		% set up the entire slide as the canvas
+		\useasboundingbox (0,0) rectangle(\the\paperwidth,\the\paperheight);
+
+		% background
+		% \fill[color=BackgroundColor] (0,0) rectangle(\the\paperwidth,\the\paperheight);
+
+%		\ifnum\thepage>1\relax % only non-title slides
+                
+%		\fi
+                \fill[color=black!85!warmbeige] rectangle(\the\paperwidth,12pt);
+                \node[anchor=south west] at(25pt,-2pt) {\color{beige!90}\tiny{UNIVERSITY OF GOTHENBURG $|$ \color{orange}SPRÅKBANKEN TEXT}};
+                \makeProgress
+	\end{tikzpicture}
+}
+
+% ---------- pixelated bullets ---------
+
+% make pixelated bullets
+\setbeamertemplate{itemize item}{
+	\tikz{
+		\draw[fill=mildorange!80,draw=none] (0, 0) rectangle(0.1, 0.1);
+		\draw[fill=mildorange!80,draw=none] (0.1, 0.1) rectangle(0.2, 0.2);
+		\draw[fill=mildorange!80,draw=none] (0, 0.2) rectangle(0.1, 0.3);
+	}
+}
+\setbeamertemplate{itemize subitem}{
+	\tikz{
+		\draw[fill=mildorange!80,draw=none] (0, 0) rectangle(0.075, 0.075);
+		\draw[fill=mildorange!80,draw=none] (0.075, 0.075) rectangle(0.15, 0.15);
+		\draw[fill=mildorange!80,draw=none] (0, 0.15) rectangle(0.075, 0.225);
+	}
+}
+\setbeamertemplate{itemize subsubitem}{
+	\tikz{
+		\draw[fill=mildorange!80,draw=none] (0.050, 0.050) rectangle(0.15, 0.15);
+	}
+}
+ 
+
+
+
+% ---------------------------------------------------------------------
+% flow chart
+\tikzset{
+    >=stealth',
+    punktchain/.style={
+        rectangle, 
+        rounded corners, 
+        % fill=black!10,
+        draw=white, very thick,
+        text width=6em,
+        minimum height=2em, 
+        text centered, 
+        on chain
+    },
+    largepunktchain/.style={
+        rectangle,
+        rounded corners,
+        draw=white, very thick,
+        text width=10em,
+        minimum height=2em,
+        on chain
+    },
+    line/.style={draw, thick, <-},
+    element/.style={
+        tape,
+        top color=white,
+        bottom color=blue!50!black!60!,
+        minimum width=6em,
+        draw=blue!40!black!90, very thick,
+        text width=6em, 
+        minimum height=2em, 
+        text centered, 
+        on chain
+    },
+    every join/.style={->, thick,shorten >=1pt},
+    decoration={brace},
+    tuborg/.style={decorate},
+    tubnode/.style={midway, right=2pt},
+    font={\fontsize{10pt}{12}\selectfont},
+}
+% ---------------------------------------------------------------------
+
+
+
+
+
+% code setting
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{red},
+    breaklines=true,
+    xleftmargin=2em,
+    numbers=left,
+    numberstyle=\color[RGB]{222,155,81},
+    frame=leftline,
+    tabsize=4,
+    breakatwhitespace=false,
+    showspaces=false,               
+    showstringspaces=false,
+    showtabs=false,
+    morekeywords={Str, Num, List},
+}
+
+% ---------------------------------------------------------------------
+
+\newcommand{\reditem}[1]{\setbeamercolor{item}{fg=red}\item #1}
+
+% 缩放公式大小
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{\ensuremath{#2}}}
+
+% 解决 font warning
+\renewcommand\textbullet{\ensuremath{\bullet}}
+
+% -------------------------------------------------------------
+% define JavaScript highlighting:
+
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{darkgreen}{rgb}{.05, .66, .65}
+\definecolor{purple}{rgb}{.66, .0, .96}
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, void, while, with},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  ndkeywords={class, export, boolean, throw, implements, import, this, var, const, let},
+  keywordstyle=\color{blue!45!fg!90}\bfseries,
+  ndkeywordstyle=\color{darkgreen!50!fg}\bfseries,
+  identifierstyle=\color{fg!85!black},
+  commentstyle=\color{purple!40!fg}\ttfamily,
+  stringstyle=\color{red!40!fg}\ttfamily,
+  sensitive=true
+}
+
+% ----------------------------
+
+% to remove date from title page:
+% \setbeamertemplate{date}{}
+
+% ----------------------------
+
+% \ifnum\showSlideNumbers=1\relax%
+%       % if slide totals are active
+%       \ifnum\showSlideTotal=1\relax%
+%         % draw both slide number and slide total
+%         \node[anchor=south east] at(\slidewidth,0.28cm) {\color{warmbeige!80!black}\tiny\insertframenumber/\inserttotalframenumber};
+%       \else
+%         \node[anchor=south east] at(\slidewidth,0.28cm) {\color{warmbeige!80!black}\tiny\insertframenumber};
+%       \fi
+%     \fi
+
+%% To get table of contents at the start of each new section (andor subsection:):
+\ifnum\showSubsectionToc=1\relax
+    \AtBeginSubsection[]
+    {
+      \begin{frame}[noframenumbering]
+        \frametitle{Table of Contents}
+        \tableofcontents[sectionstyle=show/shaded, subsectionstyle=show/shaded/hide, subsubsectionstyle=show/show/hide]
+      \end{frame}
+    }
+\fi
+\ifnum\showSectionToc=1\relax
+    \AtBeginSection[]
+    {
+      \begin{frame}[noframenumbering]
+        \frametitle{Table of Contents}
+        \tableofcontents[sectionstyle=show/shaded, subsectionstyle=show/show/hide, subsubsectionstyle=show/shaded/hide]
+      \end{frame}
+    }
+\fi
+
+
+
+% set default logo
+\setbeamertemplate{logo}{\includesvg[width=35pt]{logos/gu_warmbeige.svg}\vspace{300pt}}
+
+    
+\ifnum\showLogo=0\relax%
+    % disable default logo on all the pages!
+    \setbeamertemplate{sidebar right}{}
+\fi
+
+% ------------ make title page ---------
+
+\newcommand{\spraakbankenlogo}{\includegraphics{logos/sprakbanken_text_white.pdf}}
+
+\setbeamertemplate{title page}{
+{
+  \begin{tikzpicture}
+    % set up the entire slide as the canvas
+    \useasboundingbox (30pt,0) rectangle(\the\paperwidth,\the\paperheight);
+    % University logo
+    % \node[anchor=north west] at (0.75cm,\slideheight+5pt){\resizebox{1.8cm}{!}{\insertlogo}};
+    
+    % text (title, subtitle, author, date)
+    \node[anchor=north west,align=left,text width=\the\paperwidth-1cm,inner sep=5pt] at (1.75cm,8.5cm) (title) {\color{beige!60!warmbeige}\usebeamerfont{title}{\inserttitle}}; %,text width=\slidewidth-1cm,inner xsep=0.5cm
+    \node[anchor=north west,align=left, text width=\textwidth] at (1.75cm,7.2cm) (subtitle) {\color{warmbeige}\usebeamerfont{subtitle} {\insertsubtitle}};
+    \node[anchor=north east,align=right,text width=0.7\slidewidth] at (\slidewidth-0.4cm,4.5cm) (author) {\color{orange}\usebeamerfont{author}{\insertauthor}};
+    
+    % \node[anchor=north east,align=right,text width=0.7\slidewidth] at (\slidewidth-0.4cm,2.4cm) (date) {\color{mildorange}\usebeamerfont{date}\insertdate};
+    
+    \node[anchor=north east,align=right,text width=0.7\slidewidth]  at (\slidewidth-0.4cm,3.5cm) (institute) {\color{orange}\usebeamerfont{institute}\insertinstitute};
+    \node[anchor=north west] at (1.2cm,5cm) (graphics) {\resizebox{3.5cm}{!}{\resizebox{!}{4cm}{\insertlogo}}};
+    % \node[anchor=south east] at (\slidewidth-0.4cm,10pt+0.25cm) (sblogo) {\resizebox{!}{0.5cm}{\spraakbankenlogo}};
+  \end{tikzpicture}
+  }
+}
+
+
+
+
+
+% ------------ make final page --------
+
+\newcommand{\insertfinalinfo}{\ }
+\newcommand{\finalinfo}[1]{\renewcommand{\insertfinalinfo}{#1}}
+
+\newcommand{\makefinal}[1]{
+{
+\setbeamertemplate{logo}{}
+
+\begin{frame}[plain]
+
+  \begin{center}
+    #1
+  \end{center}
+
+\begin{tikzpicture}
+    % set up the entire slide as the canvas?
+    \useasboundingbox (30pt,200pt) rectangle(\the\paperwidth,0.5\paperheight);
+    % University logo
+    \node[anchor=south] at (0.54\slidewidth,\slideheight-7cm){\resizebox{!}{35mm}{\includesvg{logos/gu_warmbeige.svg}}};
+\end{tikzpicture}
+
+    
+\end{frame}
+}
+}
+
