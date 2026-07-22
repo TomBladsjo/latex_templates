@@ -1,0 +1,255 @@
+%!TeX encoding = UTF-8
+%!TeX program = xelatex
+\documentclass[notheorems, aspectratio=54, 14pt]{beamer}
+% aspectratio: 1610, 149, 54, 43(default), 32
+
+\usepackage{latexsym}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{color,xcolor}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{amsthm}
+\usepackage{lmodern} % 解决 font warning
+% \usepackage[UTF8]{ctex}
+\usepackage{animate} % insert gif
+
+\usepackage{lipsum} % To generate test text 
+\usepackage{ulem} % 下划线，波浪线
+
+\usepackage{listings} % display code on slides; don't forget [fragile] option after \begin{frame}
+
+\usepackage{svg}
+\usepackage{subfig}
+% \usepackage{fontspec}
+
+% \usepackage{apacite}
+% \bibliographystyle{apacite}
+\usepackage{natbib}
+\bibliographystyle{acl_natbib}
+% to remove "References" from content header:
+\renewcommand{\bibsection}{\subsubsection*{\bibname } }
+
+% theme options: progressBar, slideNumbers, slideTotal, sectionTitles, logo, sectionToc, subsectionToc (sectionTitles looks kinda ugly tho and also is redundant)
+\usetheme[progressBar, slideNumbers, slideTotal, logo, sectionToc, subsectionToc, sectionTitles]{darkmossmashup}
+% -------------------------------------------------------------
+
+
+%% preamble
+\title[dark moss mashup Theme]{PPT Template - dark moss mashup}
+\subtitle{The subtitle}
+\author{Tom (fritt efter Urinx, harisont och daherb)}
+\institute[GU Språkbanken Text]{tom.sodahl.bladsjo@svenska.gu.se}
+
+
+% -------------------------------------------------------------
+
+\begin{document}
+
+% title frame
+% \begin{frame}
+    % \titlepage
+% \end{frame}
+
+\frame[plain]{\titlepage}
+
+\begin{frame}[noframenumbering]
+\frametitle{Table of Contents}
+\tableofcontents[subsectionstyle=hide, subsubsectionstyle=hide]
+    
+\end{frame}
+
+
+
+% normal frame
+
+\section{first part}
+
+\begin{frame}{title: some alerted\\ bullet points}
+
+blabla
+
+blabla
+
+\setbeamercovered{transparent}
+
+\begin{itemize}[<alert@+|+->]
+    \item blabla
+    \item blublu
+    \begin{itemize}
+        \item blublablu
+        \item[2.2] blublubla
+    \end{itemize}
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}[fragile]{testing some scripting}
+
+\begin{block}{doesnt look very nice in block}
+    \begin{lstlisting}[language=JavaScript]
+// you can iterate over arrays using (let ... of [array]):
+let l = ['a', 'b', 'a', 'b', 'c']
+for (let item of l) {
+    console.log(item);
+}
+// but watch out!
+for (let item in l) {
+    console.log(item);
+}  // output: 0 1 2 3 4 
+\end{lstlisting}
+\end{block}
+    
+\end{frame}
+
+\begin{frame}[fragile]{testing some more scripting}
+
+Looks better like this
+
+    \begin{lstlisting}[language=JavaScript]
+// you can iterate over arrays using (let ... of [array]):
+let l = ['a', 'b', 'a', 'b', 'c']
+for (let item of l) {
+    console.log(item);
+}
+// but watch out!
+for (let item in l) {
+    console.log(item);
+}  // output: 0 1 2 3 4 
+
+\end{lstlisting}
+    
+\end{frame}
+
+\begin{frame}[fragile]{and some more code}
+
+\begin{parchment}[And like this]
+    \begin{lstlisting}[language=JavaScript]
+// you can iterate over arrays using (let ... of [array]):
+let l = ['a', 'b', 'a', 'b', 'c']
+for (let item of l) {
+    console.log(item);
+}
+// but watch out!
+for (let item in l) {
+    console.log(item);
+}  // output: 0 1 2 3 4 
+    \end{lstlisting}
+\end{parchment}
+    
+\end{frame}
+
+\subsection{a subsection}
+
+\begin{frame}{Frame Title}
+    
+
+\begin{block}{a block}
+    blabla
+
+    \begin{itemize}
+        \item bla
+        \item[2.] blu
+    \end{itemize}
+\end{block}
+
+\begin{parchment}[some example]
+    blabla
+    
+\begin{itemize}
+    \item blue
+
+\end{itemize}    
+
+\end{parchment}
+
+\end{frame}
+
+\subsection{another subsection}
+
+\begin{frame}{another frame}
+
+some bullet points:
+\begin{itemize}
+    \item blabla
+    \item blabla
+\end{itemize}
+    
+\end{frame}
+
+\section{another part}
+
+\begin{frame}{another frame}
+
+    some slides (bullet points showing up in sequence):
+
+\begin{itemize}[<+->]
+    \item first item
+    \item second item
+    \item third item
+\end{itemize}
+
+    
+\end{frame}
+
+\begin{frame}{A quote}
+
+\begin{parchment}
+    \begin{quote}
+        Reporting bias is the tendency for speakers to omit unnecessary or obvious information while mentioning things they consider relevant or surprising.
+    \end{quote}
+    \positcite[p.1]{bladsjo_introducing_2025}
+\end{parchment}
+    
+\end{frame}
+
+\begin{frame}{Some math}
+
+\begin{block}{here's some very impressive math:}
+    
+$$
+  PPL(W) 
+= \exp{\Bigg(-\frac{1}{|W|}\sum_{i \leq |W|}\mathbb{P}(W_i|W_{<i})\Bigg)}
+$$ 
+    
+\end{block}
+
+\footnotesize\vfill\hfill (it's just perplexity)
+    
+\end{frame}
+
+
+% Final slide (if uncommented in style file)
+\makefinal{Thank you for listening!}
+
+\begin{frame}[allowframebreaks, noframenumbering]
+    
+{\small
+\bibliography{testing}}
+    
+\end{frame}
+
+
+% \begin{frame}{}
+
+% % \vfill
+
+% \begin{center}
+%     Thank you for listening!
+% \end{center}
+
+% \begin{tikzpicture}
+%     % set up the entire slide as the canvas?
+%     \useasboundingbox (30pt,200pt) rectangle(\the\paperwidth,0.5\paperheight);
+%     % University logo
+%     \node[anchor=south] at (0.54\slidewidth,\slideheight-7cm){\resizebox{!}{35mm}{\includesvg{logos/gu_warmbeige.svg}}};
+% \end{tikzpicture}
+
+%     % \includesvg[width=0.2\linewidth]{logos/gu_mildorange.svg}
+    
+% \end{frame}
+
+
+
+
+\end{document}
